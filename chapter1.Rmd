@@ -2,3 +2,13 @@
 # About the project
 
 *Write a short description about the course and add a link to your GitHub repository here. This is an R Markdown (.Rmd) file so you can use R Markdown syntax.*
+
+# Exercise 1 
+## I am **happy** to be here and it is quite funny to learn coding in R. I heard about the course through the Yammer of the Masters of Public Health programme (UEF) and it is right what I need to move forward with my PhD research. 
+## My expectations 
+   + Learn how to run statistical analyses in R and apply them to my research 
+   + Learn more R functions and apply them 
+   + In general, learn better how to use R
+   
+[Link to Github repository](https://github.com/sarallaouat/IODS-project)
+
