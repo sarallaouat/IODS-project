@@ -1,7 +1,90 @@
-# Insert chapter 2 title here
+# Exercise 2. Regression and model validation 
+## 1. Reading the dataset 'learning2014'
+``` {r}
+setwd("~/IODS-project/data")
+learning2014 <- read.table("learning2014.txt", header = TRUE, sep = "")
+str(learning2014)
+```
+The dataset has 166 observations of  7 variables (gender, age, attitude, deep, stra, surf and points). *gender* is a two level factor (Male, female). *Age* and *Points* are integers. *attitude*, *deep*, *stra* and *surf* are numeric. 
+```{r eval=FALSE}
+dim(learning2014)
+```
+The dimension of the dataset 'learning2014' is 166 observations of  7 variables.  
 
-*Describe the work you have done this week and summarize your learning.*
+## 2. Display the dataset 'learning2014' into a graphical overview  
+The R packages for advanced graphics are *ggplot2* and *GGally*. Let's install and run these 2 packages.
 
-- Describe your work and results clearly. 
-- Assume the reader has an introductory course level understanding of writing and reading R code as well as statistical methods.
-- Assume the reader has no previous knowledge of your data or the more advanced methods you are using.
+```{r eval=FALSE}
+install.packages("ggplot2")
+library(ggplot2)
+install.packages("GGally")
+library(GGally)
+```
+A graphical overview can be obtained through a plot matrix which plots variables 1 by 1. However, let's use the variable *gender* to subset the data in male and female separately with different colors. 
+```{r eval=FALSE}
+p <- ggpairs(learning2014, mapping = aes(col = gender, alpha = 0.3), lower = list(combo = wrap("facethist", bins = 20)))
+p
+```
+**The distributions**  
+The plot matrix gave histograms, density plots, box plots and scatter plots. 
+From the density plots, histograms and box plots one can see that:  
+- The distributions of *Age* are skewed to the right for both genders.  
+- *attitude* is not normally distributed for both genders (two peaks).  
+- The distributions of *deep* are skewed to the left for both genders.  
+- The distributions of *stra* are approximately symetrical for both genders.  
+- The distribution of *surf* for female is approximately symetrical and for male it is skewed to the right.  
+- The distributions of *Points* are asymetrical for both genders.  
+
+**Correlations between variables**  
+The correlation coefficient is a value between -1 and +1. The closest the absolute value from 1, the highest correlation is between two variables. If it is closer to 0, the lower this correlation is. 
+From the plot matrix, one can say that the highest correlation is between:  
+- *attitude* and *Points* (positive correlation).  
+- *deep* and *surf* (negative correlation), especially for males.  
+
+## 3. Fitting a regression model and interpreting the results
+
+```{r}
+my_model <- lm(Points ~ surf + attitude + stra, data = learning2014)
+summary(my_model) 
+my_model2 <- lm(Points ~ attitude, data = learning2014)
+summary(my_model2) 
+```
+### Interpreting the results of my_model
+The choice of the three explanatory variables was based on the highest correlation coefficient provided in the plot martix.
+In **my_model**, when *surf*, *attitude* and *stra* equal 0, *Points* = 11.0171. Also, a one unit increase in *surf* would have explained a 0.5861 decrease in *Points*, a one unit increase in *attitude* would have explained a 3.3952 increase in *Points* and a one unit increase in *stra* would have explained a 0.8531 increase in *Points*.
+From my_model, one can see that only intercept and *attitude* estimates are statistically significant (Pr <0.001). Since intercept is a constant, the variable **attitude predicts Points**.
+
+### Interpreting the results of my_model2
+
+In the second step we removed variables which are not predictive from the regression model and printed **my_model2**. *Points* is explained by the following linear formula:
+**Points = alpha + (beta x attitude) + error**, where:
+alpha = Intercept = 11.6372 
+beta = 3.5255
+This means that on average, a 1 unit increase in *attitude* leads to a 3.5255 increase in *Points*. 
+
+The **multiple R-squared** of the model is defined as the percentage of the variation in the dependent variable which is explained by the explantory variable. For our data, it simply means that only 19% of the variable *Points* is explained by the variable *attitude*, which suggests that there should be other explanatory variables for *Points* which at this point are not included in our statistical model.
+
+## 4. Diagnostic plots 
+In the *plot()* function, the plots Residuals vs Fitted values, Normal QQ-plot and Residuals vs Leverage are called by the argument *which*. They respectively correspond to a *which* of 1, 2 and 5.  
+
+### Residuals vs Fitted values  
+
+```{r}
+plot(my_model2, which = 1)
+```  
+
+The assumption that the size of the errors does not depend on *attitude* is reasonable, because the plots are reasonably spread and there is no pattern.  
+
+### Normal QQ-plot  
+```{r}
+plot(my_model2, which = 2)
+```  
+
+The assumption that the errors are normally distributed is reasonable.  
+
+### Residuals vs Leverage 
+```{r}
+plot(my_model2, which = 5)  
+```  
+
+There is no observation having an unusual high impact. 
