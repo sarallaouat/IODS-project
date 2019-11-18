@@ -604,7 +604,7 @@ loss_func(class = alc$high_use, prob = alc$probability)</code></pre>
 <pre class="r"><code>library(boot)
 cv &lt;- cv.glm(data = alc, cost = loss_func, glmfit = m2, K = 10)
 cv$delta[1]</code></pre>
-<pre><code>## [1] 0.2905759</code></pre>
+<pre><code>## [1] 0.2931937</code></pre>
 <p>The average number of wrong predictions in the cross validation is 0.2931937. It means that 29,3% of the observations are incorrectly classified. It is larger than the 0.26 error found in the datacamp example. This means that my model(m2) is not as good as the datacamp model(m). The main difference is the variable sex, which is missing from my model and which also should be associated with high alcohol use.</p>
 </div>
 <div id="cross-validation-of-multiple-models" class="section level2">
@@ -735,7 +735,7 @@ loss_func1(class = alc$high_use, prob = alc$probability)</code></pre>
 <pre><code>## [1] 0.1910995</code></pre>
 <pre class="r"><code>cv1 &lt;- cv.glm(data = alc, cost = loss_func1, glmfit = M, K = 10)
 cv1$delta[1]</code></pre>
-<pre><code>## [1] 0.2434555</code></pre>
+<pre><code>## [1] 0.2460733</code></pre>
 <p>The model M has an error of 0.2643979. Let’s remove the less probably explanatory variables (with higher Pr values).</p>
 <pre class="r"><code>M2 &lt;- glm(high_use ~ failures + absences + sex + famrel + age + address + famsize + Fedu + Fjob + guardian + traveltime + studytime + paid + activities + nursery + romantic + freetime + goout + health, data = alc, family = &quot;binomial&quot;)
 summary(M2)</code></pre>
@@ -836,7 +836,7 @@ loss_func2(class = alc$high_use, prob = alc$probability)</code></pre>
 <pre><code>## [1] 0.2068063</code></pre>
 <pre class="r"><code>cv2 &lt;- cv.glm(data = alc, cost = loss_func2, glmfit = M2, K = 10)
 cv2$delta[1]</code></pre>
-<pre><code>## [1] 0.2460733</code></pre>
+<pre><code>## [1] 0.2382199</code></pre>
 <p>The model M2 has an error of 0.2460733. This is less than the error of model M. Let’s remove more variables.</p>
 <pre class="r"><code>M3 &lt;- glm(high_use ~ failures + absences + sex + famrel + address + famsize + guardian + traveltime + studytime + paid + activities + nursery + romantic + freetime + goout + health, data = alc, family = &quot;binomial&quot;)
 summary(M3)</code></pre>
@@ -931,7 +931,7 @@ loss_func3(class = alc$high_use, prob = alc$probability)</code></pre>
 <pre><code>## [1] 0.2041885</code></pre>
 <pre class="r"><code>cv3 &lt;- cv.glm(data = alc, cost = loss_func3, glmfit = M3, K = 10)
 cv3$delta[1]</code></pre>
-<pre><code>## [1] 0.2303665</code></pre>
+<pre><code>## [1] 0.2408377</code></pre>
 <p>The model M3 has an error of 0.2277487. This model is already better. Let’s see if removing some other variables from the model leads to less errors.</p>
 <pre class="r"><code>M4 &lt;- glm(high_use ~ failures + absences + sex + famrel + address + famsize + traveltime + studytime + paid + activities + nursery + romantic + freetime + goout + health, data = alc, family = &quot;binomial&quot;)
 summary(M4)</code></pre>
@@ -1024,7 +1024,7 @@ loss_func4(class = alc$high_use, prob = alc$probability)</code></pre>
 <pre><code>## [1] 0.2094241</code></pre>
 <pre class="r"><code>cv4 &lt;- cv.glm(data = alc, cost = loss_func4, glmfit = M4, K = 10)
 cv4$delta[1]</code></pre>
-<pre><code>## [1] 0.2356021</code></pre>
+<pre><code>## [1] 0.2434555</code></pre>
 <p>The model M4 has an error of 0.2408377. More than M3 error.</p>
 <pre class="r"><code>M5 &lt;- glm(high_use ~ absences + sex + famrel + address + famsize + traveltime + studytime + paid + activities + nursery + romantic + freetime + goout + health, data = alc, family = &quot;binomial&quot;)
 summary(M5)</code></pre>
@@ -1116,7 +1116,7 @@ loss_func5(class = alc$high_use, prob = alc$probability)</code></pre>
 <pre><code>## [1] 0.2120419</code></pre>
 <pre class="r"><code>cv5 &lt;- cv.glm(data = alc, cost = loss_func5, glmfit = M5, K = 10)
 cv5$delta[1]</code></pre>
-<pre><code>## [1] 0.2382199</code></pre>
+<pre><code>## [1] 0.2251309</code></pre>
 <p>M5 has more error than M3 as well with 0.2408377. M3 is probably the best model among the 5.</p>
 </div>
 </div>
