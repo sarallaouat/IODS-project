@@ -921,7 +921,7 @@ loss_func1(class = alc$high_use, prob = alc$probability)</code></pre>
 <pre><code>## [1] 0.1910995</code></pre>
 <pre class="r"><code>cv1 &lt;- cv.glm(data = alc, cost = loss_func1, glmfit = M, K = 10)
 cv1$delta[1]</code></pre>
-<pre><code>## [1] 0.2801047</code></pre>
+<pre><code>## [1] 0.2643979</code></pre>
 <p>The model M has an error of 0.2643979. Let’s remove the less probably explanatory variables (with higher Pr values).</p>
 <pre class="r"><code>M2 &lt;- glm(high_use ~ failures + absences + sex + famrel + age + address + famsize + Fedu + Fjob + guardian + traveltime + studytime + paid + activities + nursery + romantic + freetime + goout + health, data = alc, family = &quot;binomial&quot;)
 summary(M2)</code></pre>
@@ -1022,7 +1022,7 @@ loss_func2(class = alc$high_use, prob = alc$probability)</code></pre>
 <pre><code>## [1] 0.2068063</code></pre>
 <pre class="r"><code>cv2 &lt;- cv.glm(data = alc, cost = loss_func2, glmfit = M2, K = 10)
 cv2$delta[1]</code></pre>
-<pre><code>## [1] 0.2356021</code></pre>
+<pre><code>## [1] 0.2303665</code></pre>
 <p>The model M2 has an error of 0.2460733. This is less than the error of model M. Let’s remove more variables.</p>
 <pre class="r"><code>M3 &lt;- glm(high_use ~ failures + absences + sex + famrel + address + famsize + guardian + traveltime + studytime + paid + activities + nursery + romantic + freetime + goout + health, data = alc, family = &quot;binomial&quot;)
 summary(M3)</code></pre>
@@ -1117,7 +1117,7 @@ loss_func3(class = alc$high_use, prob = alc$probability)</code></pre>
 <pre><code>## [1] 0.2041885</code></pre>
 <pre class="r"><code>cv3 &lt;- cv.glm(data = alc, cost = loss_func3, glmfit = M3, K = 10)
 cv3$delta[1]</code></pre>
-<pre><code>## [1] 0.2434555</code></pre>
+<pre><code>## [1] 0.2303665</code></pre>
 <p>The model M3 has an error of 0.2277487. This model is already better. Let’s see if removing some other variables from the model leads to less errors.</p>
 <pre class="r"><code>M4 &lt;- glm(high_use ~ failures + absences + sex + famrel + address + famsize + traveltime + studytime + paid + activities + nursery + romantic + freetime + goout + health, data = alc, family = &quot;binomial&quot;)
 summary(M4)</code></pre>
@@ -1302,7 +1302,7 @@ loss_func5(class = alc$high_use, prob = alc$probability)</code></pre>
 <pre><code>## [1] 0.2120419</code></pre>
 <pre class="r"><code>cv5 &lt;- cv.glm(data = alc, cost = loss_func5, glmfit = M5, K = 10)
 cv5$delta[1]</code></pre>
-<pre><code>## [1] 0.2329843</code></pre>
+<pre><code>## [1] 0.2382199</code></pre>
 <p>M5 has more error than M3 as well with 0.2408377. M3 is probably the best model among the 5.</p>
 <hr />
 </div>
