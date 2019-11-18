@@ -3,20 +3,22 @@
 lrn14 <- read.table("https://www.mv.helsinki.fi/home/kvehkala/JYTmooc/JYTOPKYS3-data.txt", header = TRUE, sep = '\t')
 #print learning 2014 dataset table 
 lrn14
+
 # structure of 'lrn14'
 ## 60 variables of which 56 categorised from 1 to 5, 
 ##in addition to age of participants, gender (male/female), 
 ## attitude and points (0 to 30).
 ### further exploration with learn$, which.max(), which.min().
 str(lrn14)
+
 # dimension of 'lrn14'
 ## 183 observations (rows) of  60 variables (columns)
 dim(lrn14)
 
 #Create an analysis dataset with the variables 
-#gender, age, attitude, deep, stra, surf and points 
-##1. Create 'deep' variable from corresponding questions
+#gender, age, attitude, deep, stra, surf and points:
 
+##1. Create 'deep' variable from corresponding questions
 deep_questions <- c("D03", "D11", "D19", "D27", "D07", "D14", "D22", "D30","D06",  "D15", "D23", "D31") 
 deep_columns <- select(lrn14, one_of(deep_questions)) 
 lrn14$deep <- rowMeans(deep_columns) 
@@ -31,10 +33,11 @@ strategic_questions <- c("ST01","ST09","ST17","ST25","ST04","ST12","ST20","ST28"
 strategic_columns <- select(lrn14, one_of(strategic_questions)) 
 lrn14$stra <- rowMeans(strategic_columns) 
 
-##5. Select the variables for the new dataset 
+##4. Select the variables for the new dataset 
 install.packages("dplyr")
 library(dplyr) 
 lrn14 %>% select(gender,Age,Attitude,deep,stra,surf,Points) 
+
 #Scale all combination variables to the original scales (by taking the mean). 
 ##1. For deep, surf, and stra this is not needed because the means were used to create them
 ## so they are already in their original scale.
@@ -43,10 +46,10 @@ lrn14 %>% select(gender,Age,Attitude,deep,stra,surf,Points)
 lrn14$attitude <- lrn14$Attitude/10
 
 # Create the new dataset and exclude observations where the exam points variable is zero (in one line).
-# Gives a dataset with 166 observations and 7 variables
+# This gives a dataset with 166 observations and 7 variables
 learning2014 <- lrn14 %>% select(gender,Age,attitude,deep,stra,surf,Points) %>% filter(Points!=0)
 
-# Set the working directory of you R session the iods project folder. Go to 'Session' and choose the working directory or:
+# Set the working directory of you R session the iods project folder:
 setwd("~/IODS-project")
 
 #Save the analysis dataset to the 'data' folder, using for example write.csv() or write.table() functions.
