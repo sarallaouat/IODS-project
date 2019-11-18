@@ -1,0 +1,254 @@
+# Exercise 3. Logistic regression  
+## 1. Reading the dataset 'alc'  
+``` {r}
+setwd("C:/Users/Sara Allaouat/Documents/IODS-project/data")
+alc <- read.table("alc.csv", header = TRUE, sep = "")
+str(alc)
+colnames(alc)
+```
+The dataset 'alc' has 382 observations of 35 variables, including 16 integer variables, 17 factor variables, one numeric variable 'alc_use' and one logical variable 'high_use'. These two last variables are related to alcohol consumption.  
+In these 35 variables, there are 13 student identifiers giving information about age, sex, address, school, family size and situation and parents' education and job, nursery attendance and internet access at home.  
+The other 22 variables describe different aspects related to studying, school and education, alcohol consumption, free time and social life, health status, family and personal situation.  
+
+## 2. Hypotheses behind alcohol consumption among students  
+From the datset, high alcohol consumption could be explained by the following four variables:  
+1. Pstatus. Parents living apart 'A' is associated with high alcohol consumption.  
+2. failures. Increased failure is associated with increased alcohol consumption.  
+3. famrel. Decreasing family relationship is associated with increasing alcohol consumption.  
+4.absences. Increasing absences are associated with increased alcohol consumption.  
+
+## 3. Numerical and graphical exploration of selected variables distributions and their relationship with alcohol consumption 
+```{r eval=FALSE}
+install.packages("tidyr")
+install.packages("dplyr")
+install.packages("ggplot2")
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+```
+
+### Distribution of the chosen variables
+```{r eval=FALSE}
+glimpse(alc)
+gather(alc, key= "key", value = "value", alc_use, Pstatus, failures, famrel, absences) %>% glimpse
+gather(alc, key= "key", value = "value", alc_use, Pstatus, failures, famrel, absences) %>% ggplot(aes(value)) + geom_bar() + facet_wrap("key", scales = "free")
+hist(alc$absences)
+```
+Most of the parents are living together.
+Family relationships are very good to excellent for most of the participants.
+More than 300 participants never had a failure in past classes.
+There is a decrease of number of participants when the alcohol use increases.
+Most of the participants have less than 20 absences.  
+
+### Numerical exploration 
+```{r eval=FALSE}
+tab <- alc %>% group_by(Pstatus, high_use) %>% summarise(count = n(), mean(failures), mean(famrel), mean(absences))
+print(as.data.frame(tab))
+```
+High alcohol use is about half of low alcohol use in both participants whose parents live together and apart. However, it might be slightly higher when parents live apart.
+Failure looks high when parents live together and looks associated with high alcohol use in this group. The average of failure for this group is however below 1 failure.
+The lowest average of family relationship is attributed to high alcohol users in families where parents live apart. 
+The highest number of absences (on average) is seen in high alcohol users.  
+
+### Relationships with alcohol consumption
+**Alcohol use by Pstatus**
+```{r}
+library(ggplot2)
+g3 <- ggplot(data = alc, aes(x = alc_use, fill=Pstatus)) 
+g4 <- g3 + geom_bar()
+g4
+g5 <- g3 + geom_bar()+ facet_wrap("Pstatus")
+g5
+```
+In general, the parental status doesn't seem to affect the degree of alcohol consumption. In what follows, the parental status won't be used for comparative analysis because the hypothesis made is based on parents living apart which here represents a very small group which would increase uncertainty of the results.  
+
+**Alcohol use by failures**
+```{r echo=TRUE,results='hide'}
+g6 <- boxplot(alc$alc_use ~ alc$failures)
+g6
+```
+There is an increasing trend of failures showing an increased alcohol consumption. However, confidence intervals seem large.  
+
+**Alcohol use by famrel**
+```{r echo=TRUE,results='hide'}
+g7 <- boxplot(alc$alc_use ~ alc$famrel)
+g7
+```
+Alcohol consumption is the lowest when family relationships are very good or excellent with a narrowed confidence interval for excellent relationships although there are some exceptions (outliers). However, bad family relationships could be associated with high alcohol consumption (large confidence intervals).  
+
+**Alcohol use by absences**
+```{r echo=TRUE,results='hide'}
+g8 <- boxplot(alc$alc_use ~ alc$absences)
+g8
+```
+Alcohol consumption seems to increase with the number of absences and pic around 11-14 absences then decrease. There could be an association between high use of alcohol around these values of absences. More absences could be associated with something else.  
+
+## 4. Logistic regression analysis
+### Fitted model
+```{r}
+m1 <- glm(high_use ~ failures + absences + famrel + Pstatus, data = alc, family = "binomial")
+summary(m1)
+```
+Both failures and absences have positive and statistically significant estimates (Pr < 0.05). They both increase the probability of high alcohol use.  
+
+```{r}
+m2 <- glm(high_use ~ failures + absences, data = alc, family = "binomial")
+summary(m2)
+```
+After removing noise from the model (Pstatus and famrel), failures and absences still explain high alcohol use (Pr < 0.05).  
+
+### Odds ratios and their respective confidence intervals
+```{r echo=FALSE, message=FALSE, results="hide"}
+library(dplyr)
+```
+```{r}
+OR <- coef(m2) %>% exp
+CI <- confint(m2)%>% exp
+cbind(OR, CI)
+
+```
+If failures increase by 1, there is 1.65 time risk of high alcohol use. If absences increase by 1, there is 1.09 time risk of high alcohol use. The lower bounds of confidence intervals are higher then 1 for both failures and absences, which means that the results are statistically significant.  
+
+**Comparison with stated hypotheses**  
+**1. Pstatus.** Parents living apart 'A' is not associated with high alcohol consumption.    
+**2. failures.** Increased failure is associated with increased alcohol consumption.  
+**3. famrel.** Decreasing family relationship is not associated with increasing alcohol consumption.   
+**4. absences.** Increasing absences are associated with increased alcohol consumption.  
+
+## 5. Predictions
+```{r}
+probabilities <- predict(m2, type = "response")
+alc <- mutate(alc, probability = probabilities)
+alc <- mutate(alc, prediction = probability > 0.5)
+select(alc, failures, absences, high_use, probability, prediction) %>% tail(10)
+table(high_use = alc$high_use, prediction = alc$prediction)
+```
+
+From estimates made on all participants (n=382), there are 258+15 true estimations, 99 false positive, and 10 false negative.  
+
+```{r}
+g <- ggplot(alc, aes(x = probability, y = high_use, col=prediction))
+g + geom_point()
+table(high_use = alc$high_use, prediction = alc$prediction) %>% prop.table() %>% addmargins()
+```
+From the plots, we can see that true negative and true positive observations are larger in number than false predictions.  
+In terms of probability, there are 71.47% (0.67539267+0.03926702) chances to make a true estimate with the model m2.  
+
+```{r}
+loss_func <- function(class, prob) {
+  n_wrong <- abs(class - prob) > 0.5
+  mean(n_wrong)
+}
+loss_func(class = alc$high_use, prob = alc$probability)
+```
+
+The average number of wrong predictions in the dataset is 0.2853403. It means that 28,5% of the observations are incorrectly classified.  
+
+## 6. Cross-validation of the model
+```{r}
+library(boot)
+cv <- cv.glm(data = alc, cost = loss_func, glmfit = m2, K = 10)
+cv$delta[1]
+```
+The average number of wrong predictions in the cross validation is 0.2931937. It means that 29,3% of the observations are incorrectly classified. It is larger than the 0.26 error found in the datacamp example. This means that my model(m2) is not as good as the datacamp model(m). The main difference is the variable sex, which is missing from my model and which also should be associated with high alcohol use.  
+
+## 7. Cross-validation of multiple models
+```{r}
+M <- glm(high_use ~ failures + absences + sex + Pstatus + famrel + age + school + address + famsize + Medu + Fedu + Mjob + Fjob + reason + guardian + traveltime + studytime + schoolsup + famsup + paid + activities + nursery + higher + internet + romantic + freetime + goout + health, data = alc, family = "binomial")
+summary(M)
+probabilities <- predict(M, type = "response")
+alc <- mutate(alc, probability = probabilities)
+alc <- mutate(alc, prediction = probability > 0.5)
+select(alc, failures, absences, sex, Pstatus, famrel, age, school, address, famsize, Medu, Fedu, Mjob, Fjob, reason, guardian,  traveltime, studytime, schoolsup, famsup, paid, activities, nursery, higher, internet, romantic, freetime, goout, health, high_use, probability, prediction) %>% tail(10)
+table(high_use = alc$high_use, prediction = alc$prediction)
+
+loss_func1 <- function(class, prob) {
+  n_wrong <- abs(class - prob) > 0.5
+  mean(n_wrong)
+}
+loss_func1(class = alc$high_use, prob = alc$probability)
+
+cv1 <- cv.glm(data = alc, cost = loss_func1, glmfit = M, K = 10)
+cv1$delta[1]
+```
+The model M has an error of 0.2643979. 
+Let's remove the less probably explanatory variables (with higher Pr values).  
+```{r}
+M2 <- glm(high_use ~ failures + absences + sex + famrel + age + address + famsize + Fedu + Fjob + guardian + traveltime + studytime + paid + activities + nursery + romantic + freetime + goout + health, data = alc, family = "binomial")
+summary(M2)
+probabilities <- predict(M2, type = "response")
+alc <- mutate(alc, probability = probabilities)
+alc <- mutate(alc, prediction = probability > 0.5)
+select(alc, failures, absences, sex, famrel, age, school, address, famsize, Fedu, Fjob, guardian,  traveltime, studytime, paid, activities, nursery, romantic, freetime, goout, health, high_use, probability, prediction) %>% tail(10)
+table(high_use = alc$high_use, prediction = alc$prediction)
+
+loss_func2 <- function(class, prob) {
+  n_wrong <- abs(class - prob) > 0.5
+  mean(n_wrong)
+}
+loss_func2(class = alc$high_use, prob = alc$probability)
+
+cv2 <- cv.glm(data = alc, cost = loss_func2, glmfit = M2, K = 10)
+cv2$delta[1]
+```
+The model M2 has an error of 0.2460733. This is less than the error of model M.
+Let's remove more variables.
+```{r}
+M3 <- glm(high_use ~ failures + absences + sex + famrel + address + famsize + guardian + traveltime + studytime + paid + activities + nursery + romantic + freetime + goout + health, data = alc, family = "binomial")
+summary(M3)
+probabilities <- predict(M3, type = "response")
+alc <- mutate(alc, probability = probabilities)
+alc <- mutate(alc, prediction = probability > 0.5)
+select(alc, failures, absences, sex, famrel, school, address, famsize, guardian,  traveltime, studytime, paid, activities, nursery, romantic, freetime, goout, health, high_use, probability, prediction) %>% tail(10)
+table(high_use = alc$high_use, prediction = alc$prediction)
+
+loss_func3 <- function(class, prob) {
+  n_wrong <- abs(class - prob) > 0.5
+  mean(n_wrong)
+}
+loss_func3(class = alc$high_use, prob = alc$probability)
+
+cv3 <- cv.glm(data = alc, cost = loss_func3, glmfit = M3, K = 10)
+cv3$delta[1]
+```
+The model M3 has an error of 0.2277487. This model is already better.
+Let's see if removing some other variables from the model leads to less errors.
+```{r}
+M4 <- glm(high_use ~ failures + absences + sex + famrel + address + famsize + traveltime + studytime + paid + activities + nursery + romantic + freetime + goout + health, data = alc, family = "binomial")
+summary(M4)
+probabilities <- predict(M4, type = "response")
+alc <- mutate(alc, probability = probabilities)
+alc <- mutate(alc, prediction = probability > 0.5)
+select(alc, failures, absences, sex, famrel, school, address, famsize, traveltime, studytime, paid, activities, nursery, romantic, freetime, goout, health, high_use, probability, prediction) %>% tail(10)
+table(high_use = alc$high_use, prediction = alc$prediction)
+
+loss_func4 <- function(class, prob) {
+  n_wrong <- abs(class - prob) > 0.5
+  mean(n_wrong)
+}
+loss_func4(class = alc$high_use, prob = alc$probability)
+
+cv4 <- cv.glm(data = alc, cost = loss_func4, glmfit = M4, K = 10)
+cv4$delta[1]
+```
+The model M4 has an error of 0.2408377. More than M3 error.
+```{r}
+M5 <- glm(high_use ~ absences + sex + famrel + address + famsize + traveltime + studytime + paid + activities + nursery + romantic + freetime + goout + health, data = alc, family = "binomial")
+summary(M5)
+probabilities <- predict(M5, type = "response")
+alc <- mutate(alc, probability = probabilities)
+alc <- mutate(alc, prediction = probability > 0.5)
+select(alc, absences, sex, famrel, school, address, famsize, traveltime, studytime, paid, activities, nursery, romantic, freetime, goout, health, high_use, probability, prediction) %>% tail(10)
+table(high_use = alc$high_use, prediction = alc$prediction)
+
+loss_func5 <- function(class, prob) {
+  n_wrong <- abs(class - prob) > 0.5
+  mean(n_wrong)
+}
+loss_func5(class = alc$high_use, prob = alc$probability)
+
+cv5 <- cv.glm(data = alc, cost = loss_func5, glmfit = M5, K = 10)
+cv5$delta[1]
+```
+M5 has more error than M3 as well with 0.2408377. 
+M3 is probably the best model among the 5.
