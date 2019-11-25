@@ -1,6 +1,6 @@
 ---
 title: "IODS course project"
-author: "Sara Allouat" 
+author: "Sara Allaouat" 
 output:
   html_document:
     theme: cosmo
