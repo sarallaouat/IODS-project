@@ -1,0 +1,231 @@
+---
+title: "chapter4.Rmd"
+output: html_document
+---
+
+# Exploration of the Boston dataset  
+```{r eval=F, echo=FALSE}
+install.packages("MASS")
+
+```
+```{r echo=FALSE}
+library(MASS)
+str(Boston)
+dim(Boston)
+colnames(Boston)
+?Boston
+```
+
+The dataset Boston has 506 observations of 14 variables:  
+Population variables: *ptratio, black,lstat*.  
+Economic variables: *indus, dis*.  
+environment related variables: *chas, nox*.  
+Housing related variables: *zn, rm, age, tax, medv*.  
+Other variables: *crim* for crimes, *rad* for radial highway accessibility.    
+
+# Graphical overview of the Boston dataset  
+## Plot matrix  
+```{r eval=F}
+install.packages("ggplot2")
+install.packages("GGally")
+```
+```{r echo=FALSE}
+library(ggplot2)
+library(GGally)
+p <- ggpairs(Boston, columns = 1:14)
+p
+
+```
+
+### Variable distributions  
+
+"crim" has a right skewed non-normal distribution.  
+"zn"  has a right skewed non-normal distribution.  
+"indus" has bimodal distribution (two peaks).  
+"chas"  has a right skewed distribution.   
+"nox" has multimodal distribution (five peaks).  
+"rm": has a normal distribution.  
+"age" has bimodal distribution (two peaks), with the first peak less appearant.  
+"dis" distribution asymetrical, skewed to the right.  
+"rad" has bimodal distribution (two peaks).  
+"tax" has bimodal distribution (two peaks).  
+"ptratio" has multimodal distribution (three peaks).  
+"black"  has a left skewed non-normal distribution.  
+"lstat" distribution asymetrical, skewed to the left.  
+"medv" has a non-normal bimodal distribution. 
+
+### Relationships between variables  
+The strongest correlations are observed between:  
+- indus and respectively nox, dis, and tax.  
+- age and nox, age and dis, dis and nox (one hypothesis could be that unemployed people live in old buildings located in air-polluted areas).  
+- medv and respectively rm and lstat.    
+
+## Correlation matrix  
+
+```{r eval=F}
+install.packages("corrplot")
+install.packages("dplyr")
+```
+```{r echo=FALSE}
+library(corrplot)
+library(dplyr)
+cor_matrix<-cor(Boston) %>% round(2)
+cor_matrix
+c <- corrplot(cor_matrix, method="circle", type="upper", cl.pos = "b", tl.pos = "d",  tl.cex = 0.6)
+c
+```
+Positive correlations (with example of interpretation):  
+- rad and tax (the higher accessibility to radial highway, the higher the property tax rate).    
+- tax and indus.  
+- age and nox.  
+- nox and indus.  
+- medv and rm.  
+Negative correlations (with example of interpretation):  
+- dis and age (the closer to unemployment centers, the more old buildings in the area).  
+- dis and nox.  
+- dis and indus.  
+- medv and lstat.  
+
+# Scaling the data   
+```{r echo=FALSE}
+library(MASS)
+str(Boston)
+sb <- scale(Boston)
+summary(sb)
+class(sb)
+sb <- as.data.frame(sb)
+class(sb)
+```
+  
+The variables are now all standardized on the same scale. The mean of every variable shifted to 0 and its standard deviation to 1 by applying the following formula:
+scaled(x) = x-mean(x)/sd(x)  
+
+sb class was a matrix and was turned to a dataframe.  
+
+# Turning crime rate to a categorical variable  
+```{r echo=F}
+summary(sb$crim)
+qt <- quantile(sb$crim)
+crime <- cut(sb$crim, breaks = qt, include.lowest = TRUE, labels = c("very_low","low","high","very_high"))
+table(crime)
+sb <- dplyr::select(sb, -crim)
+sb <- data.frame(sb, crime)
+
+```
+
+Now crime rate is a categorical variable with four categories (one representing every quantile).  
+
+# Creating train and test sets  
+```{r echo=F}
+n <- nrow(sb)
+ind <- sample(n,  size = n * 0.8)
+train <- sb[ind,]
+test <- sb[-ind,]
+
+```
+Train represents 80% of observations from standardised Boston (sb) dataset and test represents the rest 20%.  
+
+# Linear discriminant analysis (LDA)  
+## Fitting LDA for target variable "crime"  
+```{r echo=F}
+lda_sb <- lda(crime ~., data = train)
+lda_sb
+```
+Linear discriminant 1 explains 94% of the between-group variance.      
+
+## Drawing the LDA plot  
+
+```{r echo=F}
+classes <- as.numeric(train$crime)
+plot(lda_sb, col= classes)
+```
+
+From the plots LD1xLD2 and LD1xLD3, we clearly see that from the four exisiting clusters (categories of the target variable), the blue cluster "very high crime rate" is the only one with an important distance from other clusters.  
+The interpretation of LD2xLD3 (or vice versa) is not really important here because these linear discriminants explain a relatively very small portion of the between group variance.   
+
+# Removing "crime" from the test dataset  
+
+```{r}
+correct_classes <- test$crime
+test <- dplyr::select(test, -crime)
+```
+
+# Making predictions on LDA  
+
+```{r echo=F}
+lda_pred <- predict(lda_sb, newdata = test)
+table(correct = correct_classes, predicted = lda_pred$class)
+```
+
+There are at least 30.39% of misclassifications. This is probably due to the fact that most of the included variables were assumed to be normally distributed while they are not. It could be more useful and realistic to do a logistic discriminant analysis in this case.  
+
+# Reloading Boston datset and standardising it again  
+
+```{r echo=F}
+library(MASS)
+str(Boston)
+Boston <- as.data.frame(Boston)
+sb2 <- scale(Boston)
+
+```
+All the variables from the original dataset are now on the same scale.  
+
+# Calculating distances between two observations  
+## Euclidean distance matrix  
+```{r echo=F}
+ed <- dist(Boston)
+summary(ed)
+
+```
+The minimum distance between two observations is 1.119 and the maximum distance reaches 626.047 (very large confidence interval). The mean distance is around 226 and is different from the median which is lower at around 170. This suggests that the distribution of distance is skewed to the right.  
+
+## Manhattan distance  
+```{r echo=F}
+md <- dist(Boston, method="manhattan")
+summary(md)
+
+```
+Obviously, the Manhattan distance values are larger (almost double) since by definition it is "the distance between two points measured along axes at right angles" (Black 2019).  
+
+# K-mean clustering and cluster visualization  
+
+```{r echo=F}
+library(ggplot2)
+library(GGally)
+km4 <-kmeans(Boston, centers = 4)
+Boston_clustered4 <- data.frame(Boston, factor(km4$cluster))
+ggpairs(Boston_clustered4[1:5], aes(color= factor(km4$cluster)))
+
+```
+
+
+```{r echo=F}
+set.seed(123)
+k_max <- 15
+twcss <- sapply(1:k_max, function(k){kmeans(Boston, k)$tot.withinss})
+twcss
+qplot(x = 1:k_max, y = twcss, geom = 'line')
+
+
+```
+  
+The total of within cluster sum of squares (TWCSS) changes radically by moving from 1 to 2 clusters. So 2 clusters is probably the most optimal cluster number.  
+
+```{r echo= F}
+km2 <-kmeans(Boston, centers = 2)
+Boston_clustered2 <- data.frame(Boston, factor(km2$cluster))
+a <- ggpairs(Boston_clustered2[1:5], aes(color= factor(km2$cluster))) 
+a
+b <- ggpairs(Boston_clustered2[4:9], aes(color= factor(km2$cluster))) 
+b
+e <- ggpairs(Boston_clustered2[9:14], aes(color= factor(km2$cluster))) 
+e
+f <- ggpairs(Boston_clustered2[1:14], aes(color= factor(km2$cluster))) 
+f
+```
+  
+The variables crim, rad and tax seem to clearly characterize the clusters since the two clusters are clearly distinguished.  
+
+# References    
+
+Paul E. Black, "Manhattan distance", in Dictionary of Algorithms and Data Structures [online], Paul E. Black, ed. 11 February 2019. (accessed TODAY) Available from: https://www.nist.gov/dads/HTML/manhattanDistance.html
