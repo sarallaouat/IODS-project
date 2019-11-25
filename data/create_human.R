@@ -43,6 +43,7 @@ hd$GNI <- hd$Gross.National.Income..GNI..per.Capita
 hd$GNIr_HDIr <- hd$GNI.per.Capita.Rank.Minus.HDI.Rank
 hd <- select(hd, HDIr, cy, HDI, health_birth, edu_exp, edu_year, GNI, GNIr_HDIr)
 glimpse(hd)
+
 ## Gender Inequality dataset
 gii$GIIr <- gii$GII.Rank
 gii$cy <- gii$Country
@@ -57,8 +58,8 @@ gii$work_m <- gii$Labour.Force.Participation.Rate..Male.
 str(gii)
 gii <- select(gii, GIIr, cy, GII, MMR, ABR, parliament, edu_f, edu_m, work_f, work_m)
 str(gii)
-# Adding education and work ratios columns to Gender Inequality dataset
 
+# Adding education and work ratios columns to Gender Inequality dataset
 gii <- mutate(gii, work= work_f/work_m, edu=edu_f/edu_m)
 str(gii)
 
