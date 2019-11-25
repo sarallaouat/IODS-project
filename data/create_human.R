@@ -66,6 +66,6 @@ str(gii)
 # Combining the two datasets with "cy" as the identifying variable
 human <- inner_join(hd, gii, by = "cy")
 dim(human)
-str(human)
+str(human) 
 
 ## the new dataset has 195 observations of 19 variables
