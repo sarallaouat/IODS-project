@@ -69,3 +69,53 @@ dim(human)
 str(human) 
 
 ## the new dataset has 195 observations of 19 variables
+
+# saving the new dataset to my working directory 
+setwd("C:/Users/Sara Allaouat/Documents/IODS-project/data")
+write.table(human, file = "human.txt")
+
+# Loading the human dataset into R
+setwd("C:/Users/Sara Allaouat/Documents/IODS-project/data")
+library(dplyr)
+human <- read.table("human.txt")
+human
+# Exploring the human dataset
+str(human)
+dim(human)
+## The dataset has 195 observations of 19 variables including countries, education, health and economic indicators.
+
+# Mutating GNI to numeric variable
+human <- mutate(human, GNI = as.numeric(GNI))
+str(human)
+
+# Keeping only needed variables
+keep <- c("cy", "edu", "work_f", "health_birth", "edu_exp", "GNI", "MMR", "ABR", "parliament")
+human <- select(human, one_of(keep))
+dim(human)
+
+# Removing NAs
+
+complete.cases(human)
+data.frame(human[-1], comp = complete.cases(human))
+human_ <- filter(human, complete.cases(human))
+dim(human_)
+
+## The dataset human_ has 162 observations of the 9 previously selected variables.
+## There were 33 rows with missing values for at least one variable.
+
+# Removing rows relating to regions
+human_$cy 
+last <- nrow(human_) - 7
+last
+human_2 <- human_[1:last,]
+dim(human_2)
+# Defining row names by country 
+rownames(human_2) <- human_2$cy
+
+# Removing the country column
+human_2 <- select(human_2, -cy)
+str(human_2)
+
+## The final dataset has 155 observations and 8 variables.
+
+write.table(human_2, file = "human2.txt")

@@ -1,0 +1,130 @@
+---
+title: "chapter5"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T, root.dir = normalizePath("C:/Users/Sara Allaouat/Documents/IODS-project/data"))
+```
+
+
+# Reading the data  
+``` {r}
+setwd("C:/Users/Sara Allaouat/Documents/IODS-project/data")
+human <- read.table("human2.txt", header = TRUE, sep = "")
+str(human)
+colnames(human)
+```
+
+# Graphical overview of the data 
+```{r eval=F}
+install.packages("ggplot2")
+install.packages("GGally")
+```
+
+```{r}
+library(ggplot2)
+library(GGally)
+p <- ggpairs(human, upper=list(continuous=wrap("cor",size=2.7)), lower=list(continuous=wrap("points",size=0.5)))
+p <- p + theme(axis.text=element_text(size=4.5),strip.text=element_text(size=7))
+p
+summary(human)
+```
+## Variable distribution  
+"edu" and "work_f" are bimodal skewed to the left.  
+"health_birth" is skewed to the left.  
+"edu_exp" is more or less a normal distribution slightly skewed to the left.  
+"GNI" tends to a flat distribution except for countries with lowest and highest GNI.  
+"MMR" is bimodal skewed to the right.  
+"ABR" and "parliament" are skewed to the right.  
+
+## Relationships between variables  
+The strongest positive correlations are observed between:  
+- edu_exp and health_birth (0.789).    
+- ABR and MMR (0.759).    
+
+The strongest negative correlations are observed between:  
+- MMR and health_birth (-0.857).    
+- MMR and edu_exp (-0.736).    
+- ABR and health_birth (-0.729).    
+- ABR and edu_exp (-0.704).  
+
+# Principal component analysis (PCA)  
+
+```{r}
+pca_human <- prcomp(human)
+pca_human
+summary(pca_human)
+```
+
+Every principal component (PC) is dominated by one variable. For example, PC1 is largely dominated by variable MMR. PC2 is largely dominated by the variable GNI. PC3 by ABR... Also, PC1 alone explains 91.93% of the total variance of the observed variables.  
+
+# Biplot PC1xPC2  
+```{r}
+biplot(pca_human, choices = 1:2, cex= c(0.5, 0.5), col = c("grey40", "deeppink2"))
+```
+
+Here we can see that MMR is strongly and positively correlated with PC1 (arrows almost parallel) and GNI is strongly and negatively correlated with PC2. The arrow of MMR is long which means that it has a large standard deviation. This can be easily verified from the PCA results table above.
+
+# Scaling the variables
+
+```{r}
+human_sc <- scale(human)
+summary(human_sc)
+class(human_sc)
+human_sc <- as.data.frame(human_sc)
+class(human_sc)
+```
+
+Now all the variables are standardised into one scale.  
+
+# PCA with the scaled variables  
+
+```{r}
+pca_human_sc <- prcomp(human_sc)
+pca_human_sc
+s <- summary(pca_human_sc)
+s
+pca_pr <- round(100*s$importance[2, ], digits = 1)
+pca_pr
+```
+
+Most of the PCs have a more moderate-sized coefficients on several of the variables, except PC3 which is clearly dominated by GNI only.  
+The five first PCs explain 92% of the variations in the observations.  
+When the variables are on the same scale, there is a more accurate estimation of the principal components and their explanatory variables.  
+
+# Biplot with the scaled variables PC1xPC2  
+```{r}
+pc_lab <- paste0(names(pca_pr), " (", pca_pr, "%)")
+biplot(pca_human_sc, cex = c(0.5, 0.5), col = c("grey40", "deeppink2"), xlab = pc_lab[1], ylab = pc_lab[2])
+```
+
+MMR and ABR are strongly and positively correlated with PC1 and health_birth, edu and edu_exp negatively correlated with PC1.   parliament and work_f is positively correlated with PC2.  
+About 65% of the variability in the data is explained in decreasing order by PC1 (49.3%) and PC2 (15.4%). This means that while MMR and ABR are independent from health_birth, edu and edu_exp, all these variables, account for most of the variations in the observations of the human dataset since they mostly explain respectively PC1 and PC2.  
+
+#  Loading and exploring tea dataset 
+```{r eval=F}
+install.packages("FactoMineR")
+library(FactoMineR)
+library(ggplot2)
+library(GGally)
+install.packages("dplyr")
+library(dplyr)
+install.packages("tidyr")
+library(tidyr)
+data(tea)
+str(tea)
+dim(tea)
+tea_time <- tea[,1:6]
+gather(tea_time) %>% ggplot(aes(value))+ geom_bar() + facet_wrap("key", scales = "free") + theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+```
+The dataset tea has 300 observations of 36 variables related to the time, frequency, place, and how tea is consumed. Also variables describing the health status of the participants and why they consume tea. The visualization of the first 6 variables of the dataset shows that most responders take tea out of dinner and lunch time. Most of the time not in evenings.
+
+# Multiple Correspondence Analysis (MCA) and corresponding biplot  
+```{r eval=F}
+mca <- MCA(tea_time, graph = FALSE)
+summary(mca)
+plot(mca, invisible=c("ind"), habillage = "quali")
+```
+
+Dimension 1 to 4 explain more than 75% of the variabilities in the observations. Dim 1 is mostly explained by tea.time, lunch and dinner. Dim 2 is mostly explained by breakfast, evening and always. Dim 1 and 2 explain together about 43% of variabilities in the observations. From the biplot, we can see that there is a close relationship between Not.lunch, Not.evening and Not.always. dinner is the furthest. tea time is close to breakfast. 
+ 
